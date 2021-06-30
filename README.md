@@ -24,3 +24,7 @@ cd fedcomp_gating
 ## To run tests for lasso
 
 ./test_lasso.sh
+
+## To run tests for xmlsec
+
+./test_xmlsec.sh
