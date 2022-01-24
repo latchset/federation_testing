@@ -7,6 +7,8 @@ import time
 import samltest
 from html.parser import HTMLParser
 
+LOGGER = logging.getLogger(__name__)
+
 
 class MyPageParser(HTMLParser):
     def __init__(self):
@@ -97,6 +99,26 @@ def test_logout(resource_url, logout_url, saml_login_instance):
                                                  saml_login_instance,
                                                  sp_resource)
     logging.info(f"OK, got redirected to IdP again")
+
+
+def test_bad_logout_uri(resource_url, logout_url, saml_login_instance,
+                        bad_logout_redirect_urls):
+    """
+    Test that the user cannot be tricked on logout into following a
+    malformed URI through the ReturnTo parameter
+    """
+    # First, verify we are logged in
+    logging.info(f"Re-using cached session")
+    sp_resource = saml_login_instance.session.get(resource_url)
+    assert is_page_without_redirects(sp_resource)
+    assert samltest.same_normalized_url(resource_url, sp_resource.url)
+    logging.info(f"OK, retrieved {resource_url} without contacting IdP")
+
+    # Logout..
+    for bad_url in bad_logout_redirect_urls:
+        with pytest.raises(samltest.LogoutReplyError):
+            LOGGER.info("Trying to trick the user into following %s", bad_url)
+            saml_login_instance.logout(bad_url)
 
 
 def test_ecp_flow(login_user, resource_url, saml_test_instance):

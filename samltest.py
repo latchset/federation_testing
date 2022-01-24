@@ -46,6 +46,12 @@ class SamlFlowError(SamlError):
                 "but received {self.got_code}"
 
 
+class LogoutReplyError(SamlError):
+    def __init__(self, msg, expected=None, got=None):
+        super().__init__(msg, expected, got)
+        self._base_msg = "Malformed Logout reply"
+
+
 class ConfigurationError(SamlError):
     def __init__(self, msg):
         super(ConfigurationError, self).__init__(msg)
@@ -75,7 +81,7 @@ def same_normalized_url(orig, received):
     orig_normalized = urllib.parse.urlunparse(
                                     urllib.parse.urlparse(orig))
     received_normalized = urllib.parse.urlunparse(
-                                    urllib.parse.urlparse(orig))
+                                    urllib.parse.urlparse(received))
     logging.debug(f"Arrived at {received_normalized}")
     return orig_normalized == received_normalized
 
@@ -284,7 +290,8 @@ class MellonLogoutRequest(LogoutRequest):
                                                   return_to)
 
     def check_from_reply(self, reply):
-        pass
+        if reply.status_code > 300:
+            raise LogoutReplyError('Unexpected reply on logout')
 
 
 class SamlIdp(object):
@@ -483,6 +490,7 @@ class SamlLoginTest(object):
         logout_url = logout_req.logout_url()
         logging.debug(f"Will log using {logout_url}")
         document_get = self.session.get(logout_url)
+        logout_req.check_from_reply(document_get)
         if document_get.status_code != 200:
             raise SamlFlowError(document_get.status_code)
         logging.debug(document_get.url)

@@ -36,7 +36,8 @@ py.test-3 --idp-realm master \
           --logout-url=https://$(hostname):60443/mellon_root/private \
           --info-url=https://$(hostname):60443/mellon_root/private/static \
           --nested-protected-url=https://$(hostname):60443/mellon_root/private/static/private_static \
-	  test_mellon.py
+          --bad-logout-redirect-url=http:www.redhat.com,'\/redhat.com','\//redhat.com','\///redhat.com' \
+          test_mellon.py
 rv=$?
 if [ $rv -ne 0 ]; then
     echo "Mellon test failed"
