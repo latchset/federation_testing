@@ -5,8 +5,8 @@
 set -x
 set -e
 
-#KC_VERSION=10.0.2
-KC_VERSION=latest
+KC_VERSION=16.1.1
+#KC_VERSION=latest
 
 #################
 
