@@ -3,6 +3,7 @@
 import pytest
 import logging
 import time
+import os
 
 import samltest
 from html.parser import HTMLParser
@@ -220,3 +221,28 @@ def test_mellon_enable_info(login_user,
     # Request the info resource again
     info_req = saml_test_instance.session.get(info_resource_url)
     assert is_page_without_redirects(info_req, has_auth_type_mellon)
+
+
+def test_mellon_diagnostics(login_user, resource_url, saml_test_instance):
+    """
+    Test mellon diagnostics records something to the log when configured
+    """
+    logging.info(f"About to run the WebSSO flow for {resource_url} with "
+                  "an empty session")
+
+    # first remove the file so we know it's clean for the check later
+    diag_file = '/var/log/httpd/mellon_diagnostics'
+    open(diag_file, 'w').close()
+
+    # next perform a normal authentication flow to generate diag data
+    username, password = login_user
+    saml_test_instance.redirect_post_flow(resource_url,
+                                          username,
+                                          password,
+                                          is_my_page)
+
+    # finally check that the file exists and is larger than 0
+    diag_size = os.path.getsize(diag_file)
+    if diag_size > 0:
+        logging.info(f"Diagnostics file {diag_file}"
+                      "size {diag_size} is greater than 0")

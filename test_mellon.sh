@@ -24,28 +24,9 @@ setsebool httpd_can_network_connect=on || echo "setsebool httpd_can_network_conn
 
 systemctl restart httpd
 
-sleep 10
 
 ################
-
-py.test-3 --idp-realm master \
-          --idp-url https://$(hostname):8443 \
-          --sp-url https://$(hostname):60443/mellon_root \
-          --username testuser --password Secret123 \
-          --url https://$(hostname):60443/mellon_root/private \
-          --logout-url=https://$(hostname):60443/mellon_root/private \
-          --info-url=https://$(hostname):60443/mellon_root/private/static \
-          --nested-protected-url=https://$(hostname):60443/mellon_root/private/static/private_static \
-          --bad-logout-redirect-url=http:www.redhat.com,'\/redhat.com','\//redhat.com','\///redhat.com' \
-          test_mellon.py
-rv=$?
-if [ $rv -ne 0 ]; then
-    echo "Mellon test failed"
-    exit 1
-fi
-
-################
-# mellon-diagnostics test
+# setup for mellon-diagnostics test
 
 # Just exit if mod_auth_mellon-diagnostics can't be installed,
 # at the moment it's not present in any of the repos
@@ -65,32 +46,22 @@ EOF
 echo "LoadModule auth_mellon_module modules/mod_auth_mellon-diagnostics.so" > /etc/httpd/conf.modules.d/10-auth_mellon.conf
 
 systemctl restart httpd || exit 1
+################
 
-# Re-run the web POST flow again
+sleep 10
+
 py.test-3 --idp-realm master \
           --idp-url https://$(hostname):8443 \
           --sp-url https://$(hostname):60443/mellon_root \
-          --username testuser \
-          --password Secret123 \
+          --username testuser --password Secret123 \
           --url https://$(hostname):60443/mellon_root/private \
           --logout-url=https://$(hostname):60443/mellon_root/private \
           --info-url=https://$(hostname):60443/mellon_root/private/static \
           --nested-protected-url=https://$(hostname):60443/mellon_root/private/static/private_static \
-          -k test_web_sso_post_redirect
+          --bad-logout-redirect-url=http:www.redhat.com,'\/redhat.com','\//redhat.com','\///redhat.com' \
+          test_mellon.py
 rv=$?
 if [ $rv -ne 0 ]; then
-    echo "Mellon diagnostics test failed"
-    exit 1
-fi
-
-# Make sure /something/ was written
-if [ ! -f /var/log/httpd/mellon_diagnostics ]; then
-    echo "The diagnostics file does not exist"
-    exit 1
-fi
-
-size=$(stat -t --format="%b" /var/log/httpd/mellon_diagnostics)
-if [ $size -eq 0 ]; then
-    echo "No diagnostics were written"
+    echo "Mellon test failed"
     exit 1
 fi
