@@ -48,6 +48,19 @@ echo "LoadModule auth_mellon_module modules/mod_auth_mellon-diagnostics.so" > /e
 systemctl restart httpd || exit 1
 ################
 
+# Enable ECP Flow for client in Keycloak
+
+kcadm="podman exec keycloak /opt/keycloak/bin/kcadm.sh"
+
+$kcadm config credentials --server https://$(hostname):8443/auth/ \
+        --realm master --user admin --password Secret123
+
+CLIENTID="https://$(hostname):60443/mellon_root/mellon/metadata"
+ID=$($kcadm get clients| jq -r ".[]|select(.clientId==\"$CLIENTID\").id")
+
+$kcadm update clients/$ID -r master -s 'attributes={"saml.allow.ecp.flow":"true"}'
+
+# Run test
 sleep 10
 
 py.test-3 --idp-realm master \

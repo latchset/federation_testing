@@ -95,10 +95,16 @@ sleep 5
 
 systemctl start httpd
 
-kcadm="podman exec keycloak /opt/jboss/keycloak/bin/kcadm.sh"
-$kcadm config credentials --server http://localhost:8080/auth --realm master --user admin --password Secret123
-$kcadm create users -r $NEW_REALM -s username=testuser -s enabled=true
-$kcadm set-password -r $NEW_REALM --username testuser --new-password Secret123
+kcadm="podman exec keycloak /opt/keycloak/bin/kcadm.sh"
+
+$kcadm config credentials --server https://$(hostname):8443/auth/ \
+        --realm master --user admin --password Secret123
+
+USERID=$($kcadm get users|jq -r '.[]|select(.username=="testuser").id')
+if [ -z "$USERID" ]; then
+    $kcadm create users -r $NEW_REALM -s username=testuser -s enabled=true
+    $kcadm set-password -r $NEW_REALM --username testuser --new-password Secret123
+fi
 
 sleep 5
 

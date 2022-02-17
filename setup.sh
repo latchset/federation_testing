@@ -5,8 +5,8 @@
 set -x
 set -e
 
-KC_VERSION=16.1.1
-#KC_VERSION=latest
+#KC_VERSION=16.1.1
+KC_VERSION=latest
 
 #################
 
@@ -18,6 +18,7 @@ if [ -f /etc/os-release ]; then
 fi
 
 dnf -y install \
+    java-11-openjdk-headless \
     keycloak-httpd-client-install \
     mod_auth_mellon \
     mod_auth_openidc \
@@ -169,7 +170,7 @@ update-ca-trust
 
 # keycloak runs as UID 1000 so we need the certs to be accessible to the
 # keycloak user
-chown 1000:1000 tls*
+chown -R 1000:1000 /tmp/https
 
 popd
 
@@ -186,34 +187,72 @@ fi
 
 ################
 
+keytool -import \
+    -keystore /tmp/https/truststore.keystore \
+    -file /tmp/https/rootCA.crt \
+    -alias federation_example \
+    -trustcacerts -storepass Secret123 -noprompt
+
 podman pull quay.io/keycloak/keycloak:$KC_VERSION
+
+# podman unshare not needed for rootful containers
+# podman unshare chown 1000 -R /tmp/https
 
 podman run --name keycloak -d \
     -p 8080:8080 \
     -p 8443:8443 \
-    -v /tmp/https:/etc/x509/https:shared \
-    -e KEYCLOAK_USER=admin \
-    -e KEYCLOAK_PASSWORD=Secret123 \
-    quay.io/keycloak/keycloak:$KC_VERSION
+    -e KEYCLOAK_ADMIN=admin \
+    -e KEYCLOAK_ADMIN_PASSWORD=Secret123 \
+    -e KC_LOG_LEVEL=debug \
+    -e KC_HOSTNAME=$(hostname) \
+    -e KC_HTTPS_CERTIFICATE_FILE=/etc/x509/https/tls.crt \
+    -e KC_HTTPS_CERTIFICATE_KEY_FILE=/etc/x509/https/tls.key \
+    -e KC_HTTPS_TRUST_STORE_FILE=/etc/x509/https/truststore.keystore \
+    -e KC_HTTPS_TRUST_STORE_PASSWORD=Secret123 \
+    -e KC_HTTP_RELATIVE_PATH=/auth \
+    -v /tmp/https:/etc/x509/https:Z \
+    quay.io/keycloak/keycloak:$KC_VERSION start --auto-build
 
 sleep 15
 
-kcadm="podman exec keycloak /opt/jboss/keycloak/bin/kcadm.sh"
+kcadm="podman exec keycloak /opt/keycloak/bin/kcadm.sh"
 
 set +e
 
 for count in {1..10}; do
-    $kcadm config credentials --server http://localhost:8080/auth \
-        --realm master --user admin --password Secret123 
+    $kcadm config truststore --trustpass Secret123 \
+        /etc/x509/https/truststore.keystore
     if [ $? -eq 0 ]; then
         break
     else
         sleep 30
     fi
+done
+
+if [ $count -eq 10 ]; then
     echo "----- Begin keycloak container logs for iteration $count"
     podman logs keycloak
     echo "----- End keycloak container logs for iteration $count"
+    exit 1
+fi
+
+for count in {1..10}; do
+    $kcadm config credentials --server https://$(hostname):8443/auth/ \
+        --realm master --user admin --password Secret123
+
+    if [ $? -eq 0 ]; then
+        break
+    else
+        sleep 30
+    fi
 done
+
+if [ $count -eq 10 ]; then
+    echo "----- Begin keycloak container logs for iteration $count"
+    podman logs keycloak
+    echo "----- End keycloak container logs for iteration $count"
+    exit 1
+fi
 
 set -e
 
