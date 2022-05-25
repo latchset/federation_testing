@@ -12,9 +12,9 @@ keycloak-httpd-client-install   \
     --keycloak-admin-password-file - \
     --app-name mellon_example_app \
     --keycloak-realm master \
-    --mellon-root "/mellon_root" \
-    --mellon-https-port 60443 \
-    --mellon-protected-locations "/mellon_root/private" \
+    --location-root "/mellon_root" \
+    --client-https-port 60443 \
+    --protected-locations "/mellon_root/private" \
     --force
 
 ################

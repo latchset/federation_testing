@@ -54,7 +54,7 @@ def saml_test_instance(pytestconfig):
                          pytestconfig.getoption('sp_url'),
                          pytestconfig.getoption('idp_url'))
 
-    login_test = SamlLoginTest(idp_f, sp_f, pytestconfig.getoption('no_verify'))
+    login_test = SamlLoginTest(idp_f, sp_f, not pytestconfig.getoption('no_verify'))
     return login_test
 
 
@@ -143,5 +143,5 @@ def oidc_test_instance(pytestconfig):
                          pytestconfig.getoption('oidc_redirect_url'),
                          pytestconfig.getoption('idp_url'))
 
-    login_test = OidcLoginTest(idp_f, sp_f, pytestconfig.getoption('no_verify'))
+    login_test = OidcLoginTest(idp_f, sp_f, not pytestconfig.getoption('no_verify'))
     return login_test

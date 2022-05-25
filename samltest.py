@@ -173,7 +173,7 @@ class LogoutRequest(object):
         return_to = f"ReturnTo={self.return_to}"
         sp_parsed_url = urllib.parse.urlparse(self.sp_url)
         url_fragments = urllib.parse.ParseResult(scheme='https',
-                                                 netloc=sp_parsed_url.hostname,
+                                                 netloc=sp_parsed_url.netloc,
                                                  path=self.logout_service,
                                                  params='',
                                                  query=return_to,
