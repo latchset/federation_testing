@@ -53,8 +53,19 @@ def is_page_without_redirects(reply, page_check_fn=lambda x: True):
 
 
 def test_web_sso_post_redirect(login_user, resource_url, saml_test_instance):
-    """
-    Test the web browser SSO profile
+    """Test the web browser SSO profile
+
+    :id: ffcd9c05-34b3-4aa4-91a6-279c9cbc3613
+    :steps:
+        1. Run the WebSSO for resource_url flow with an empty session
+        2. Reuse cached session and check page for redirects
+        3. Clear session
+        4. Check that page contains IdP auth redirect
+    :expectedresults:
+        1. Success
+        2. Page should be without redirects
+        3. Success
+        4. Response should contain redirect to the IdP auth page
     """
     logging.info(f"About to run the WebSSO flow for {resource_url} with "
                   "an empty session")
@@ -80,8 +91,20 @@ def test_web_sso_post_redirect(login_user, resource_url, saml_test_instance):
 
 
 def test_logout(resource_url, logout_url, saml_login_instance):
-    """
-    Test the SP-initiated logout profile
+    """Test the SP-initiated logout profile
+
+    :id: cfc511e6-1410-4139-b33f-b0b3f39a9978
+    :steps:
+        1. Verify that we are logged in by reusing cached session
+        2. Check page for redirects
+        3. Logout
+        4. Make sure we can't access the protected resource
+           without being redirected to the IdP again
+    :expectedresults:
+        1. Success
+        2. Page should be without redirects
+        3. Success
+        4. Response should contain redirect to the IdP auth page
     """
     # First, verify we are logged in
     logging.info(f"Re-using cached session")
@@ -104,9 +127,18 @@ def test_logout(resource_url, logout_url, saml_login_instance):
 
 def test_bad_logout_uri(resource_url, logout_url, saml_login_instance,
                         bad_logout_redirect_urls):
-    """
-    Test that the user cannot be tricked on logout into following a
-    malformed URI through the ReturnTo parameter
+    """Test that the user cannot be tricked on logout into following
+    a malformed URI through the ReturnTo parameter
+
+    :id: 2c1e2e58-d6a0-47b0-8d4c-55f9fd1d0374
+    :steps:
+        1. Verify that we are logged in by reusing cached session
+        2. Check page for redirects
+        3. Logout using malformed URI
+    :expectedresults:
+        1. Success
+        2. Page should be without redirects
+        3. Should receive Malformed Logout reply
     """
     # First, verify we are logged in
     logging.info(f"Re-using cached session")
@@ -123,8 +155,20 @@ def test_bad_logout_uri(resource_url, logout_url, saml_login_instance,
 
 
 def test_ecp_flow(login_user, resource_url, saml_test_instance):
-    """
-    Test ECP profile
+    """Test ECP profile
+
+    :id: 8ed54232-e281-4db1-bdb2-173a29dcccbe
+    :steps:
+        1. Run ECP flow for resource_url with an empty session
+        2. Reuse cached session and check page for redirects
+        3. Clear session
+        4. Make sure we can't access the protected resource
+           without ECP AuthnRequest
+    :expectedresults:
+        1. Success
+        2. Page should be without redirects
+        3. Success
+        4. Response should contain ECP AuthnRequest
     """
     logging.info(f"About to run the ECP flow for {resource_url} with "
                   "an empty session")
@@ -154,43 +198,54 @@ def test_mellon_enable_info(login_user,
                             info_resource_url,
                             nested_protected_resource_url,
                             saml_test_instance):
-    """
-    Test that accessing a resource with:
-        MellonEnable info
+    """Test that accessing a resource with:
+    MellonEnable info
     is allowed without authentication, but the environment is populated when
     accessed as an authenticated user
 
-    To make sure inheriting the access checks works well with mellon,
-    the environment should be set up so that:
-        - info_resource_url is below resource_url
-        - resource_url is protected with MellonEnable auth
-        - info_resource_url is "protected" with MellonEnable info
-        - nested_protected_resource_url is below resource_url and protected
-          with MellonEnable auth
+    :id: acfe2cf0-1d9d-495c-93d1-786f36557861
+    :setup: To make sure inheriting the access checks works well with mellon, \
+the environment should be set up so that:
 
-    For example:
-    <Location /example_app/private>
-        AuthType Mellon
-        MellonEnable auth
-        Require valid-user
-    </Location>
+    - info_resource_url is below resource_url
+    - resource_url is protected with MellonEnable auth
+    - info_resource_url is "protected" with MellonEnable info
+    - nested_protected_resource_url is below resource_url and protected
+      with MellonEnable auth
 
-    <Location /example_app/private/static>
-        MellonEnable info
-        Require all granted
-    </Location>
+    For example::
 
-    <Location /example_app/private/static/private>
-        MellonEnable auth
-        Require valid-user
-    </Location>
+        <Location /example_app/private>
+            AuthType Mellon
+            MellonEnable auth
+            Require valid-user
+        </Location>
 
-    The test checks that:
-        - you can't access neither resource_url nor
-          nested_protected_resource_url without authentication
-        - you can access info_resource_url without authentication
-        - when you access info_resource_url after authentication, the variables
-          would be populated
+        <Location /example_app/private/static>
+            MellonEnable info
+            Require all granted
+        </Location>
+
+        <Location /example_app/private/static/private>
+            MellonEnable auth
+            Require valid-user
+        </Location>
+
+    :steps:
+        1. Check that the URLS are nested as expected
+        2. Test that we can access the info resource without
+           authentication
+        3. Test that accessing resource_url and nested_protected_resource_url
+           without authentication redirects to IdP
+        4. Login
+        5. Test that after accessing info_resource_url after authentication
+           variables would be populated
+    :expectedresults:
+        1. Success
+        2. Page should be without redirects
+        3. We should be redirected to IdP for authentication
+        4. Success
+        5. Page should be without redirects
     """
     # First, check the URLs are nested as we expect
     assert info_resource_url.startswith(resource_url)
@@ -224,8 +279,17 @@ def test_mellon_enable_info(login_user,
 
 
 def test_mellon_diagnostics(login_user, resource_url, saml_test_instance):
-    """
-    Test mellon diagnostics records something to the log when configured
+    """Test mellon diagnostics records something to the log when configured
+
+    :id: d3bca100-fde6-4701-841a-d65cf87232e3
+    :steps:
+        1. Remove /var/log/httpd/mellon_diagnostics so we know it's clean
+        2. Perform a normal authentication flow to generate diag data
+        3. Check that the file exists and is larger than 0
+    :expectedresults:
+        1. Success
+        2. Success
+        3. File size should be larger than 0
     """
     logging.info(f"About to run the WebSSO flow for {resource_url} with "
                   "an empty session")

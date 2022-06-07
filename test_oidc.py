@@ -43,8 +43,21 @@ def is_page_without_redirects(reply, page_check_fn=lambda x: True):
 
 
 def test_auth_flow(login_user, resource_url, oidc_test_instance):
-    """
-    Test the usual authorisation flow
+    """Test the usual authorisation flow
+
+    :id: e8dcc342-f2ca-4c12-935a-d2d7a3a884e8
+    :steps:
+        1. Run authorisation flow for resource_url with an empty session
+        2. Reuse cached session and check page for redirects
+        3. Clear session
+        4. Make sure we can't access the protected resource
+           without authentication
+    :expectedresults:
+        1. Success
+        2. Page should be without redirects
+        3. Success
+        4. Response should contain IdP authentication request
+
     """
     LOGGER.info(f"About to run the authorisation flow for {resource_url} "
                  " with an empty session")
@@ -71,9 +84,21 @@ def test_auth_flow(login_user, resource_url, oidc_test_instance):
 
 def test_logout(login_user, resource_url,
                 oidc_test_instance, logout_redirect_url):
-    """
-    Test that the user can be logged out and is no longer able to
+    """Test that the user can be logged out and is no longer able to
     reach the protected resource after logout
+
+    :id: e5c7ce13-6dbb-4486-996b-a982a08ff6be
+    :steps:
+        1. Verify that we are logged in by reusing cached session
+        2. Check page for redirects
+        3. Logout
+        4. Make sure we can't access the protected resource
+           without being redirected to the IdP again
+    :expectedresults:
+        1. Success
+        2. Page should be without redirects
+        3. Success
+        4. Response should contain redirect to the IdP auth page
     """
     username, password = login_user
     oidc_test_instance.authorisation_flow(resource_url,
@@ -100,8 +125,15 @@ def test_logout(login_user, resource_url,
 def test_oauth(idp_realm, oidc_client_info,
                login_user, negative_user,
                oauth_resource_url, oidc_test_instance):
-    """
-    Test that the OAuth flow works
+    """Test that the OAuth flow works
+
+    :id: 2937dc4c-096a-4023-aa6e-4e267c53e2d3
+    :steps:
+        1. Run OAuth flow for resource_url with a valid user
+        2. Run OAuth flow for resource_url with a invalid user
+    :expectedresults:
+        1. Success
+        2. Should raise OAuthUnauthorizedError
     """
     username, password = login_user
     oidc_client_id, oidc_client_secret = oidc_client_info
@@ -122,9 +154,22 @@ def test_oauth(idp_realm, oidc_client_info,
 def test_bad_logout_uri(login_user, resource_url,
                         oidc_test_instance,
                         bad_logout_redirect_urls):
-    """
-    Test that the user cannot be tricked into following a malformed
+    """Test that the user cannot be tricked into following a malformed
     URI through the redirect_uri parameter
+
+    :id: dfe480f7-e87f-47f7-b1ae-647d7cf41f4f
+    :steps:
+        1. Verify that we are logged in by reusing cached session
+        2. Check page for redirects
+        3. Logout using malformed URI
+        4. Check that we are NOT logged out by fetching the resource
+        5. Check that we got the protected resource without being redirected
+    :expectedresults:
+        1. Success
+        2. Page should be without redirects
+        3. Should receive Malformed Logout reply
+        4. Success
+        5. Page should be without redirects
     """
     username, password = login_user
     oidc_test_instance.authorisation_flow(resource_url,

@@ -36,12 +36,36 @@ class TestNoSha1:
         client.sign('http://example.com')
 
     def test_sign_hmac_sha1_ok(self):
+        """Test signing with HMAC-SHA1 signature
+
+        :id: 95306a6e-0710-4336-ab7c-a13aae501e58
+        :steps:
+            1. Check that HMAC-SHA1 signature works
+        :expectedresults:
+            1. Success
+        """
         self.sign(self.get_client('HMAC-SHA1'))
 
     def test_sign_hmac_sha256_ok(self):
+        """Test signing with HMAC-SHA256 signature
+
+        :id: 3928f8e4-65f7-4d38-80c2-6ec86b529009
+        :steps:
+            1. Check that HMAC-SHA256 signature works
+        :expectedresults:
+            1. Success
+        """
         self.sign(self.get_client('HMAC-SHA256'))
 
     def test_sign_rsa_sha1_not_permitted(self):
+        """Test signing with RSA-SHA1 signature
+
+        :id: c86141f0-c9f2-40cc-851a-b3df13e20565
+        :steps:
+            1. Check that RSA-SHA1 signature is not allowed and an error is thrown
+        :expectedresults:
+            1. Should receive an error that RSA-SHA1 is deprecated
+        """
         exp_error = 'RSA-SHA1 is deprecated, use a stronger hash or HMAC-SHA1'
         with pytest.raises(ValueError) as e_info:
             self.sign(self.get_client('RSA-SHA1'))
