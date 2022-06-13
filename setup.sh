@@ -25,6 +25,7 @@ dnf -y install \
     python3-lasso \
     python3-requests \
     python3-pytest \
+    python3-distro \
     dnf-utils \
     openssl \
     mod_ssl \
