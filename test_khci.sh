@@ -100,7 +100,7 @@ kcadm="podman exec keycloak /opt/keycloak/bin/kcadm.sh"
 $kcadm config credentials --server https://$(hostname):8443/auth/ \
         --realm master --user admin --password Secret123
 
-USERID=$($kcadm get users|jq -r '.[]|select(.username=="testuser").id')
+USERID=$($kcadm get users -r $NEW_REALM | jq -r '.[]|select(.username=="testuser").id')
 if [ -z "$USERID" ]; then
     $kcadm create users -r $NEW_REALM -s username=testuser -s enabled=true
     $kcadm set-password -r $NEW_REALM --username testuser --new-password Secret123
