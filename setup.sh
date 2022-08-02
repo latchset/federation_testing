@@ -30,6 +30,7 @@ dnf -y install \
     dnf-utils \
     openssl \
     mod_ssl \
+    httpd \
     podman
 
 #################
