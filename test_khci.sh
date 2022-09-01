@@ -17,6 +17,7 @@ function run_web_sso_test() {
               --password $password \
               --url https://$(hostname):60443/mellon_root/private \
               --logout-url=https://$(hostname):60443/mellon_root/private \
+              --junit-xml=result_khci_${keycloak_realm}.xml \
               -k test_web_sso_post_redirect
 }
 

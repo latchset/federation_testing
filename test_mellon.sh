@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x 
+set -x
 
 ################
 
@@ -72,6 +72,7 @@ py.test-3 --idp-realm master \
           --info-url=https://$(hostname):60443/mellon_root/private/static \
           --nested-protected-url=https://$(hostname):60443/mellon_root/private/static/private_static \
           --bad-logout-redirect-url=http:www.redhat.com,'\/redhat.com','\//redhat.com','\///redhat.com' \
+          --junit-xml=result_mellon.xml \
           test_mellon.py
 rv=$?
 if [ $rv -ne 0 ]; then

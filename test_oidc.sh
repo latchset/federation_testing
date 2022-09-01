@@ -70,9 +70,10 @@ py.test-3 --log-cli-level=INFO \
           --oidc-client-id=$oidc_client_id \
           --oauth-url=https://$(hostname):60443/openidc_root/oauth \
           --neg-username=neguser --neg-password=Secret123 \
-	  --sp-type=mod_auth_openidc \
+          --sp-type=mod_auth_openidc \
           --bad-logout-redirect-url=http:www.redhat.com,'\/redhat.com','\//redhat.com','\///redhat.com' \
-	  test_oidc.py
+          --junit-xml=result_oidc.xml \
+          test_oidc.py
 
 rv=$?
 if [ $rv -ne 0 ]; then

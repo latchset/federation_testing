@@ -12,4 +12,4 @@ echo -e '\n\n'
 echo "Next run python_oauthlib tests"
 echo -e '\n\n'
 
-py.test-3 -v test_python_oauthlib.py
+py.test-3 -v test_python_oauthlib.py --junit-xml=result_python_oauthlib.xml

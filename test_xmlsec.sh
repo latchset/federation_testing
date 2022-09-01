@@ -11,5 +11,5 @@ echo -e '\n\n'
 
 dnf -y install xmlsec1 xmlsec1-openssl
 
-py.test-3 -v test_xmlsec.py
+py.test-3 -v test_xmlsec.py --junit-xml=result_xmlsec.xml
 
