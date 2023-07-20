@@ -7,7 +7,7 @@ set -x
 echo Secret123 | \
 keycloak-httpd-client-install   \
     --client-originate-method registration \
-    --keycloak-server-url https://$(hostname):8443 \
+    --keycloak-server-url https://$(hostname -f):8443 \
     --keycloak-admin-username admin \
     --keycloak-admin-password-file - \
     --app-name mellon_example_app \
@@ -52,10 +52,10 @@ systemctl restart httpd || exit 1
 
 kcadm="podman exec keycloak /opt/keycloak/bin/kcadm.sh"
 
-$kcadm config credentials --server https://$(hostname):8443/auth/ \
+$kcadm config credentials --server https://$(hostname -f):8443/auth/ \
         --realm master --user admin --password Secret123
 
-CLIENTID="https://$(hostname):60443/mellon_root/mellon/metadata"
+CLIENTID="https://$(hostname -f):60443/mellon_root/mellon/metadata"
 ID=$($kcadm get clients| jq -r ".[]|select(.clientId==\"$CLIENTID\").id")
 
 $kcadm update clients/$ID -r master -s 'attributes={"saml.allow.ecp.flow":"true"}'
@@ -64,13 +64,13 @@ $kcadm update clients/$ID -r master -s 'attributes={"saml.allow.ecp.flow":"true"
 sleep 10
 
 py.test-3 --idp-realm master \
-          --idp-url https://$(hostname):8443 \
-          --sp-url https://$(hostname):60443/mellon_root \
+          --idp-url https://$(hostname -f):8443 \
+          --sp-url https://$(hostname -f):60443/mellon_root \
           --username testuser --password Secret123 \
-          --url https://$(hostname):60443/mellon_root/private \
-          --logout-url=https://$(hostname):60443/mellon_root/private \
-          --info-url=https://$(hostname):60443/mellon_root/private/static \
-          --nested-protected-url=https://$(hostname):60443/mellon_root/private/static/private_static \
+          --url https://$(hostname -f):60443/mellon_root/private \
+          --logout-url=https://$(hostname -f):60443/mellon_root/private \
+          --info-url=https://$(hostname -f):60443/mellon_root/private/static \
+          --nested-protected-url=https://$(hostname -f):60443/mellon_root/private/static/private_static \
           --bad-logout-redirect-url=http:www.redhat.com,'\/redhat.com','\//redhat.com','\///redhat.com' \
           --junit-xml=result_mellon.xml \
           test_mellon.py
