@@ -6,7 +6,7 @@ set -x
 set -e
 
 echo "Running test on: $(hostname)"
-echo "Hostname -f shows: $(hostname -f)"
+echo "Hostname -f shows: $(hostname)"
 
 #KC_VERSION=16.1.1
 KC_VERSION=latest
@@ -120,7 +120,7 @@ prompt             = no
 [ req_distinguished_name ]
 O = IdM Federation Example
 OU = IdM Federation Example Test
-CN = $(hostname -f)
+CN = $(hostname)
 
 [ req_ext ]
 subjectAltName = @alt_names
@@ -133,7 +133,7 @@ subjectAltName = @alt_names
 
 [alt_names]
 DNS.1 = localhost
-DNS.2 = $(hostname -f)
+DNS.2 = $(hostname)
 EOF
 
 #################
@@ -209,7 +209,7 @@ podman run --name keycloak -d \
     -e KEYCLOAK_ADMIN=admin \
     -e KEYCLOAK_ADMIN_PASSWORD=Secret123 \
     -e KC_LOG_LEVEL=debug \
-    -e KC_HOSTNAME=$(hostname -f) \
+    -e KC_HOSTNAME=$(hostname) \
     -e KC_HTTPS_CERTIFICATE_FILE=/etc/x509/https/tls.crt \
     -e KC_HTTPS_CERTIFICATE_KEY_FILE=/etc/x509/https/tls.key \
     -e KC_HTTPS_TRUST_STORE_FILE=/etc/x509/https/truststore.keystore \
@@ -242,7 +242,7 @@ if [ $count -eq 10 ]; then
 fi
 
 for count in {1..10}; do
-    $kcadm config credentials --server https://$(hostname -f):8443/auth/ \
+    $kcadm config credentials --server https://$(hostname):8443/auth/ \
         --realm master --user admin --password Secret123
 
     if [ $? -eq 0 ]; then
@@ -341,7 +341,7 @@ EOF
 
 cat > /var/www/html/openidc_root/private/index.html <<EOF
 <html><title>Secure</title>Hello there...from SP ...<br>
-<a href="/openidc_root/private/redirect_uri?logout=https://$(hostname -f):60443/openidc_root/logged_out.html">Logout</a>
+<a href="/openidc_root/private/redirect_uri?logout=https://$(hostname):60443/openidc_root/logged_out.html">Logout</a>
 <hr>
 <pre><!--#printenv --></pre>
 EOF

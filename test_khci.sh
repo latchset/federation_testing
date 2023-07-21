@@ -11,12 +11,12 @@ function run_web_sso_test() {
     password=$3
 
     py.test-3 --idp-realm $keycloak_realm \
-              --idp-url https://$(hostname -f):8443 \
-              --sp-url https://$(hostname -f):60443/mellon_root \
+              --idp-url https://$(hostname):8443 \
+              --sp-url https://$(hostname):60443/mellon_root \
               --username $username \
               --password $password \
-              --url https://$(hostname -f):60443/mellon_root/private \
-              --logout-url=https://$(hostname -f):60443/mellon_root/private \
+              --url https://$(hostname):60443/mellon_root/private \
+              --logout-url=https://$(hostname):60443/mellon_root/private \
               --junit-xml=result_khci_${keycloak_realm}.xml \
               -k test_web_sso_post_redirect
 }
@@ -41,7 +41,8 @@ function does_realm_exist {
 echo Secret123 | \
 keycloak-httpd-client-install   \
     --client-originate-method registration \
-    --keycloak-server-url https://$(hostname -f):8443 \
+    --client-hostname $(hostname) \
+    --keycloak-server-url https://$(hostname):8443 \
     --keycloak-admin-username admin \
     --keycloak-admin-password-file - \
     --app-name mellon_example_app \
@@ -81,7 +82,8 @@ rm -f /etc/httpd/conf.d/mellon_example_app_mellon_keycloak_master.conf
 echo Secret123 | \
 keycloak-httpd-client-install   \
     --client-originate-method registration \
-    --keycloak-server-url https://$(hostname -f):8443 \
+    --client-hostname $(hostname) \
+    --keycloak-server-url https://$(hostname):8443 \
     --keycloak-admin-username admin \
     --keycloak-admin-password-file - \
     --app-name mellon_example_app \
@@ -98,7 +100,7 @@ systemctl start httpd
 
 kcadm="podman exec keycloak /opt/keycloak/bin/kcadm.sh"
 
-$kcadm config credentials --server https://$(hostname -f):8443/auth/ \
+$kcadm config credentials --server https://$(hostname):8443/auth/ \
         --realm master --user admin --password Secret123
 
 USERID=$($kcadm get users -r $NEW_REALM | jq -r '.[]|select(.username=="testuser").id')
