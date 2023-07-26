@@ -15,8 +15,14 @@ KC_VERSION=latest
 
 if [ -f /etc/os-release ]; then
     . /etc/os-release
+    VER_MAJOR=$(echo $VERSION_ID|cut -f1 -d.)
+    VER_MINOR=$(echo $VERSION_ID|cut -f2 -d.)
     if [ "$ID" = "rhel" ]; then
         dnf config-manager --enable rhel-*
+        if [ $VER_MAJOR -eq 8 -a $VER_MINOR -le 3 ]; then
+            KC_VERSION=18.0.2
+            echo "$(hostname -i|awk '{print $1}') $(hostname)" >> /etc/hosts
+        fi
     fi
 fi
 
