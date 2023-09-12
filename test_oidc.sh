@@ -47,6 +47,9 @@ OIDCOAuthClientID $oidc_client_id
 OIDCOAuthClientSecret $oidc_secret
 # Otherwise the KC-issued JWT tokens are too large for the cache
 OIDCCacheEncrypt On
+
+# Opening up allowed redirects to test redirect url validation
+OIDCRedirectURLsAllowed ^.*$
 EOF
 
 systemctl restart httpd
@@ -72,7 +75,7 @@ py.test-3 --log-cli-level=INFO \
           --oauth-url=https://$(hostname):60443/openidc_root/oauth \
           --neg-username=neguser --neg-password=Secret123 \
           --sp-type=mod_auth_openidc \
-          --bad-logout-redirect-url=http:www.redhat.com,'\/redhat.com','\//redhat.com','\///redhat.com' \
+          --bad-logout-redirect-url=http:www.redhat.com,'/%09redhat.com','\/redhat.com','\//redhat.com','\///redhat.com' \
           --junit-xml=result_oidc.xml \
           test_oidc.py
 
