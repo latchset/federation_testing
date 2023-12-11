@@ -9,7 +9,8 @@ echo "Running test on: $(hostname)"
 echo "Hostname -f shows: $(hostname)"
 
 #KC_VERSION=16.1.1
-KC_VERSION=latest
+#KC_VERSION=latest
+KC_VERSION=22.0.1
 
 #################
 
@@ -222,7 +223,10 @@ podman run --name keycloak -d \
     -e KC_HTTPS_TRUST_STORE_PASSWORD=Secret123 \
     -e KC_HTTP_RELATIVE_PATH=/auth \
     -v /tmp/https:/etc/x509/https:Z \
-    quay.io/keycloak/keycloak:$KC_VERSION start --auto-build
+    quay.io/keycloak/keycloak:$KC_VERSION start
+
+# Removing deprecated auto-build option
+# --auto-build
 
 sleep 15
 
