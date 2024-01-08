@@ -29,10 +29,44 @@ def sign_xml_template(outfile, template, private_key):
     return p.returncode
 
 
-def verify_xml_template(outfile):
-    LOGGER.info(f"Verifying {outfile} using the embedded pubkey")
-    xmlsec1_verify_cmd = ['xmlsec1', '--verify', outfile]
+def verify_xml_template(outfile, public_key=None, fips=False):
+    LOGGER.info(f"Verifying {outfile} using the embedded public_key")
+    xmlsec1_verify_cmd = ['xmlsec1', '--verify']
+    if public_key != None:
+        xmlsec1_verify_cmd.extend(['--pubkey-pem', public_key])
+    xmlsec1_verify_cmd.append(outfile)
+    cmd_env = os.environ.copy()
+    if fips:
+        cmd_env["OPENSSL_FORCE_FIPS_MODE"] = "1"
+    LOGGER.info(f"Using env: --\n{cmd_env}\n")
+    LOGGER.info(f"RUNNING: {xmlsec1_verify_cmd}")
     p = subprocess.Popen(xmlsec1_verify_cmd, stderr=subprocess.PIPE,
+                         stdout=subprocess.PIPE, universal_newlines=True)
+    stdout, stderr = p.communicate()
+    LOGGER.debug(stdout)
+    LOGGER.debug(stderr)
+
+    return p.returncode
+
+
+def gen_key_ecdsa(private_key):
+    LOGGER.info(f"Generating ECDSA private key {private_key} using openssl")
+    openssl_cmd = ['openssl', 'ecparam', '-out', private_key, '-name',
+                   'secp384r1', '-genkey']
+    p = subprocess.Popen(openssl_cmd, stderr=subprocess.PIPE,
+                         stdout=subprocess.PIPE, universal_newlines=True)
+    stdout, stderr = p.communicate()
+    LOGGER.debug(stdout)
+    LOGGER.debug(stderr)
+
+    return p.returncode
+
+
+def gen_pubkey_ecdsa(private_key, public_key):
+    LOGGER.info(f"Generating ECDSA public key {public_key} using openssl")
+    openssl_cmd = ['openssl', 'ec', '-in', private_key, '-pubout',
+                   '-out', public_key]
+    p = subprocess.Popen(openssl_cmd, stderr=subprocess.PIPE,
                          stdout=subprocess.PIPE, universal_newlines=True)
     stdout, stderr = p.communicate()
     LOGGER.debug(stdout)
@@ -78,3 +112,26 @@ def test_sign_and_verify_with_sha1():
     private_key = "/tmp/https/tls.key"
     assert sign_xml_template(outfile, template, private_key) == 0
     assert verify_xml_template(outfile) == 0
+
+def test_sign_and_verify_with_ecdsa_sha384():
+    """Test you can sign and verify xml with ecdsa sha386
+
+    :id: ca201596-4663-49d3-9c4a-615a9a70aa97
+    :steps:
+        1. Generate ECDSA private key
+        2. Derive public key from private key
+        3. Sign xml template using ecdsa sha486
+        4. Verify signed file using public key
+    :expectedresults:
+        1. Success
+        2. Success
+        3. Success
+    """
+    template = "xmlsec_data/book-template-ecdsa-sha384.xml"
+    outfile = get_outfile(template)
+    private_key = "/tmp/https/xmlsec_ecdsa.key"
+    public_key = "/tmp/https/xmlsec_ecdsa.pub"
+    assert gen_key_ecdsa(private_key) == 0
+    assert gen_pubkey_ecdsa(private_key, public_key) == 0
+    assert sign_xml_template(outfile, template, private_key) == 0
+    assert verify_xml_template(outfile, public_key=public_key, fips=True) == 0
