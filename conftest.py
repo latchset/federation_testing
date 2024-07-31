@@ -1,9 +1,6 @@
 #!/usr/bin/python3
 
 import pytest
-from samltest import SamlLoginTest
-from samltest import IdpFactory as SamlIdpFactory
-from samltest import SpFactory as SamlSpFactory
 from oidctest import OidcLoginTest
 from oidctest import IdpFactory as OidcIdpFactory
 from oidctest import SpFactory as OidcSpFactory
@@ -44,6 +41,9 @@ def logout_url(pytestconfig):
 
 @pytest.fixture()
 def saml_test_instance(pytestconfig):
+    from samltest import SamlLoginTest
+    from samltest import IdpFactory as SamlIdpFactory
+    from samltest import SpFactory as SamlSpFactory
     idp_f = SamlIdpFactory(pytestconfig.getoption('idp_type'),
                            pytestconfig.getoption('idp_url'),
                            pytestconfig.getoption('idp_realm'),

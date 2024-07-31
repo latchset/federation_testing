@@ -28,12 +28,9 @@ if [ -f /etc/os-release ]; then
 fi
 
 dnf -y install \
-    java-11-openjdk-headless \
     keycloak-httpd-client-install \
-    mod_auth_mellon \
     mod_auth_openidc \
     python3-lxml \
-    python3-lasso \
     python3-requests \
     python3-pytest \
     python3-distro \
@@ -42,6 +39,16 @@ dnf -y install \
     mod_ssl \
     httpd \
     podman
+
+if [ "$ID" = "rhel" -o "$ID" = "centos" ] && [ $VER_MAJOR -lt 10 ]; then
+    dnf -y install \
+        java-11-openjdk-headless \
+        mod_auth_mellon \
+        python3-lasso
+else
+    dnf -y install \
+        java-17-openjdk-headless
+fi
 
 #################
 
@@ -251,7 +258,7 @@ if [ $count -eq 10 ]; then
     exit 1
 fi
 
-for count in {1..10}; do
+for count in {1..3}; do
     $kcadm config credentials --server https://$(hostname):8443/auth/ \
         --realm master --user admin --password Secret123
 
@@ -262,7 +269,7 @@ for count in {1..10}; do
     fi
 done
 
-if [ $count -eq 10 ]; then
+if [ $count -eq 3 ]; then
     echo "----- Begin keycloak container logs for iteration $count"
     podman logs keycloak
     echo "----- End keycloak container logs for iteration $count"
@@ -287,6 +294,50 @@ sed -i 's/localhost.crt/web.crt/' /etc/httpd/conf.d/example_app_ssl.conf
 sed -i 's/localhost.key/web.key/' /etc/httpd/conf.d/example_app_ssl.conf
 
 ################
+
+mkdir -p /var/www/html/openidc_root/private/static/private_static
+
+cat > /var/www/html/openidc_root/logged_out.html <<EOF
+<html>
+<title>Logout</title>
+<p>
+Congratulations, you've been logged out!
+</p>
+<p>
+Now try to <a href="/openidc_root/private/">log back in</a>
+</p>
+</html>
+EOF
+
+cat > /var/www/html/openidc_root/private/index.html <<EOF
+<html><title>Secure</title>Hello there...from SP ...<br>
+<a href="/openidc_root/private/redirect_uri?logout=https://$(hostname):60443/openidc_root/logged_out.html">Logout</a>
+<hr>
+<pre><!--#printenv --></pre>
+EOF
+
+cat > /etc/httpd/conf.d/openidc_example_app_private.conf <<EOF
+<Directory /var/www/html/openidc_root/private>
+    Options +Includes
+    AddOutputFilter INCLUDES .html
+</Directory>
+EOF
+
+cp /var/www/html/openidc_root/private/index.html \
+    /var/www/html/openidc_root/private/static/
+cp /var/www/html/openidc_root/private/index.html \
+    /var/www/html/openidc_root/private/static/private_static/
+
+
+systemctl start httpd
+
+################
+
+if [ "$ID" = "rhel" -o "$ID" = "centos" ] && [ $VER_MAJOR -ge 10 ]; then
+    echo "mod_auth_mellon not supported in RHEL-10 and later"
+    echo "Skipping mellon setup"
+    exit 0
+fi
 
 mkdir -p /var/www/html/mellon_root/private/static/private_static
 
@@ -332,41 +383,5 @@ cp /var/www/html/mellon_root/private/index.html \
     /var/www/html/mellon_root/private/static/
 cp /var/www/html/mellon_root/private/index.html \
     /var/www/html/mellon_root/private/static/private_static/
-
-################
-
-mkdir -p /var/www/html/openidc_root/private/static/private_static
-
-cat > /var/www/html/openidc_root/logged_out.html <<EOF
-<html>
-<title>Logout</title>
-<p>
-Congratulations, you've been logged out!
-</p>
-<p>
-Now try to <a href="/openidc_root/private/">log back in</a>
-</p>
-</html>
-EOF
-
-cat > /var/www/html/openidc_root/private/index.html <<EOF
-<html><title>Secure</title>Hello there...from SP ...<br>
-<a href="/openidc_root/private/redirect_uri?logout=https://$(hostname):60443/openidc_root/logged_out.html">Logout</a>
-<hr>
-<pre><!--#printenv --></pre>
-EOF
-
-cat > /etc/httpd/conf.d/openidc_example_app_private.conf <<EOF
-<Directory /var/www/html/openidc_root/private>
-    Options +Includes
-    AddOutputFilter INCLUDES .html
-</Directory>
-EOF
-
-cp /var/www/html/openidc_root/private/index.html \
-    /var/www/html/openidc_root/private/static/
-cp /var/www/html/openidc_root/private/index.html \
-    /var/www/html/openidc_root/private/static/private_static/
-
 
 systemctl start httpd

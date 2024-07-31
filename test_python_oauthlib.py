@@ -1,5 +1,6 @@
 import sys
 import pytest
+import distro
 
 import oauthlib
 from oauthlib.oauth1 import Client
@@ -35,6 +36,9 @@ class TestNoSha1:
     def sign(self, client):
         client.sign('http://example.com')
 
+    @pytest.mark.xfail(distro.id() == "rhel"
+                       and int(distro.major_version()) >= 9,
+                       reason="SHA1 is deprecated")
     def test_sign_hmac_sha1_ok(self):
         """Test signing with HMAC-SHA1 signature
 
@@ -57,6 +61,9 @@ class TestNoSha1:
         """
         self.sign(self.get_client('HMAC-SHA256'))
 
+    @pytest.mark.xfail(distro.id() == "rhel"
+                       and int(distro.major_version()) > 9,
+                       reason="SHA1 is deprecated")
     def test_sign_rsa_sha1_not_permitted(self):
         """Test signing with RSA-SHA1 signature
 

@@ -93,8 +93,8 @@ def test_sign_and_verify_with_sha256():
     assert verify_xml_template(outfile) == 0
 
 
-@pytest.mark.xfail(distro.name() == "Red Hat Enterprise Linux"
-                   and distro.version() >= '9',
+@pytest.mark.xfail(distro.id() == "rhel"
+                   and int(distro.major_version()) >= 9,
                    reason="SHA1 is deprecated")
 def test_sign_and_verify_with_sha1():
     """Test you can sign and verify xml with sha-1
