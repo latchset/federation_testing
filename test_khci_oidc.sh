@@ -5,5 +5,5 @@
 set -x
 set -e
 
-echo "No specific mod_auth_openidc tests for keycloak-httpd-client-install at this time"
-exit 0
+echo "Running mod_auth_openidc tests"
+./test_oidc.sh
