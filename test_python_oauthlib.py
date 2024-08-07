@@ -36,7 +36,7 @@ class TestNoSha1:
     def sign(self, client):
         client.sign('http://example.com')
 
-    @pytest.mark.xfail(distro.id() == "rhel"
+    @pytest.mark.xfail((distro.id() == "rhel" or distro.id() == "centos")
                        and int(distro.major_version()) >= 9,
                        reason="SHA1 is deprecated")
     def test_sign_hmac_sha1_ok(self):
@@ -61,7 +61,7 @@ class TestNoSha1:
         """
         self.sign(self.get_client('HMAC-SHA256'))
 
-    @pytest.mark.xfail(distro.id() == "rhel"
+    @pytest.mark.xfail((distro.id() == "rhel" or distro.id() == "centos")
                        and int(distro.major_version()) > 9,
                        reason="SHA1 is deprecated")
     def test_sign_rsa_sha1_not_permitted(self):
