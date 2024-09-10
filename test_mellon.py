@@ -4,6 +4,8 @@ import pytest
 import logging
 import time
 import os
+import tempfile
+import subprocess
 
 import samltest
 from html.parser import HTMLParser
@@ -310,3 +312,24 @@ def test_mellon_diagnostics(login_user, resource_url, saml_test_instance):
     if diag_size > 0:
         logging.info(f"Diagnostics file {diag_file}"
                       "size {diag_size} is greater than 0")
+
+
+def test_mellon_create_metadata():
+    """Test mellon create metadata script creates xml file
+
+    :id: 1bdcf65d-5cc2-4a17-8d21-0f02a77d3f65
+    :steps:
+        1. Run mellon_create_metadata.sh script
+    :expectedresults:
+        1. Create xml file
+    """
+    temp_dir = tempfile.TemporaryDirectory()
+    os.chdir(temp_dir.name)
+    print(temp_dir.name)
+    script_cmd = ["/usr/libexec/mod_auth_mellon/mellon_create_metadata.sh",
+                 "test", "https://localhost/test"]
+    subprocess.run(script_cmd)
+    assert os.path.isfile(f"{temp_dir.name}/test.xml"), \
+        "metadata script did not create xml file"
+    assert os.stat(f"{temp_dir.name}/test.xml").st_size != 0, "xml file is empty"
+
