@@ -3,6 +3,9 @@
 import pytest
 import logging
 import time
+import socket
+import shutil
+import subprocess
 
 import oidctest
 from html.parser import HTMLParser
@@ -158,6 +161,9 @@ def test_bad_logout_uri(login_user, resource_url,
     URI through the redirect_uri parameter
 
     :id: dfe480f7-e87f-47f7-b1ae-647d7cf41f4f
+    :setup:
+        1. Configure system for mod_auth_openidc tests
+        2. Add OIDCRedirectURLsAllowed setting to config
     :steps:
         1. Verify that we are logged in by reusing cached session
         2. Check page for redirects
@@ -171,6 +177,15 @@ def test_bad_logout_uri(login_user, resource_url,
         4. Success
         5. Page should be without redirects
     """
+    LOGGER.info("Setting OIDCRedirectURLsAllowed option in config")
+    conf_path = "/etc/httpd/conf.d/openidc_example_app_oidc_keycloak_master.conf"
+    shutil.copy(conf_path, f"{conf_path}.test_backup")
+    hostname = socket.getfqdn()
+    rule = f"OIDCRedirectURLsAllowed ^https://{hostname}:60443"
+    with open(conf_path, "a") as conf_file:
+        conf_file.write(rule)
+    subprocess.run(["systemctl", "restart", "httpd"])
+
     username, password = login_user
     oidc_test_instance.authorisation_flow(resource_url,
                                           username,
@@ -192,3 +207,5 @@ def test_bad_logout_uri(login_user, resource_url,
         # redirected
         sp_resource = oidc_test_instance.session.get(resource_url)
         assert is_page_without_redirects(sp_resource)
+
+    shutil.move(f"{conf_path}.test_backup", conf_path)

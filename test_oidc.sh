@@ -47,9 +47,6 @@ OIDCOAuthClientID $oidc_client_id
 OIDCOAuthClientSecret $oidc_secret
 # Otherwise the KC-issued JWT tokens are too large for the cache
 OIDCCacheEncrypt On
-
-# Opening up allowed redirects to test redirect url validation
-OIDCRedirectURLsAllowed ^.*$
 EOF
 
 systemctl restart httpd
