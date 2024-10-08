@@ -5,8 +5,11 @@
 set -x
 set -e
 
+AUTHDIR=${1:-""}
+
 echo "Running test on: $(hostname)"
 echo "Hostname -f shows: $(hostname)"
+echo "Running test for AUTHDIR=${AUTHDIR}"
 
 #KC_VERSION=16.1.1
 #KC_VERSION=latest
@@ -228,7 +231,7 @@ podman run --name keycloak -d \
     -e KC_HTTPS_CERTIFICATE_KEY_FILE=/etc/x509/https/tls.key \
     -e KC_HTTPS_TRUST_STORE_FILE=/etc/x509/https/truststore.keystore \
     -e KC_HTTPS_TRUST_STORE_PASSWORD=Secret123 \
-    -e KC_HTTP_RELATIVE_PATH=/auth \
+    -e KC_HTTP_RELATIVE_PATH=${AUTHDIR} \
     -v /tmp/https:/etc/x509/https:Z \
     quay.io/keycloak/keycloak:$KC_VERSION start
 
@@ -259,7 +262,7 @@ if [ $count -eq 10 ]; then
 fi
 
 for count in {1..3}; do
-    $kcadm config credentials --server https://$(hostname):8443/auth/ \
+    $kcadm config credentials --server https://$(hostname):8443${AUTHDIR}/ \
         --realm master --user admin --password Secret123
 
     if [ $? -eq 0 ]; then

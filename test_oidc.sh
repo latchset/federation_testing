@@ -2,13 +2,16 @@
 
 set -x
 
+AUTHDIR=${1:-""}
+echo "Running tests with AUTHDIR=${AUTHDIR}"
+
 ################
 
 echo Secret123 | \
 keycloak-httpd-client-install   \
     --client-originate-method registration \
     --client-hostname $(hostname) \
-    --keycloak-server-url https://$(hostname):8443 \
+    --keycloak-server-url https://$(hostname):8443${AUTHDIR} \
     --keycloak-admin-username admin \
     --keycloak-admin-password-file - \
     --keycloak-realm master \
@@ -38,7 +41,7 @@ cat >> $conf_path <<EOF
 </Location>
 
 # Substitute the IDP name and the realm name. My realm is called federation.test. The rest is a well-known URI
-OIDCOAuthIntrospectionEndpoint https://$(hostname):8443/auth/realms/master/protocol/openid-connect/token/introspect
+OIDCOAuthIntrospectionEndpoint https://$(hostname):8443${AUTHDIR}/realms/master/protocol/openid-connect/token/introspect
 # We'll be verifying the access token against the keycloak introspection point
 OIDCOAuthIntrospectionEndpointParams token_type_hint=access_token
 # This must match the client ID as set on the keycloak side
@@ -62,7 +65,7 @@ systemctl restart httpd
 
 py.test-3 --log-cli-level=INFO \
           --url https://$(hostname):60443/openidc_root/private \
-          --idp-url https://$(hostname):8443 \
+          --idp-url https://$(hostname):8443${AUTHDIR} \
           --username testuser --password Secret123 \
           --oidc-redirect-url https://$(hostname):60443/openidc_root/private/redirect_uri \
           --logout-redirect-url https://$(hostname):60443/openidc_root/private \
@@ -74,7 +77,7 @@ py.test-3 --log-cli-level=INFO \
           --sp-type=mod_auth_openidc \
           --bad-logout-redirect-url=http:www.redhat.com,'/%09redhat.com','\/redhat.com','\//redhat.com','\///redhat.com' \
           --junit-xml=result_oidc.xml \
-          test_oidc.py
+	  test_oidc.py
 
 rv=$?
 if [ $rv -ne 0 ]; then

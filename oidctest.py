@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import re
 import argparse
 import logging
 import json
@@ -288,7 +289,11 @@ class KeycloakIdp(OpenIdIdp):
     def get_bearer_token(self, session, realm, username, password, client_id, client_secret):
         logging.debug("Getting OAuth token from IDP as %s:%s", username, password)
 
-        token_service_path = "auth/realms/%s/protocol/openid-connect/token" % (realm)
+        token_service_path = "realms/%s/protocol/openid-connect/token" % (realm)
+        match = re.search(r'http[s]:\/\/.*(\/.*)$', self.url)
+        if match is not None:
+            authdir = match.group(1)
+            token_service_path = authdir + "/" + token_service_path
         token_service_url = urllib.parse.urljoin(self.url, token_service_path)
 
         form_data = {'username': username, 'password': password}
