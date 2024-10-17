@@ -5,6 +5,8 @@
 set -x
 set -e
 
+./setup.sh /auth
+
 function run_web_sso_test() {
     keycloak_realm=$1
     username=$2
@@ -42,7 +44,7 @@ echo Secret123 | \
 keycloak-httpd-client-install   \
     --client-originate-method registration \
     --client-hostname $(hostname) \
-    --keycloak-server-url https://$(hostname):8443 \
+    --keycloak-server-url https://$(hostname):8443/auth \
     --keycloak-admin-username admin \
     --keycloak-admin-password-file - \
     --app-name mellon_example_app \
@@ -83,7 +85,7 @@ echo Secret123 | \
 keycloak-httpd-client-install   \
     --client-originate-method registration \
     --client-hostname $(hostname) \
-    --keycloak-server-url https://$(hostname):8443 \
+    --keycloak-server-url https://$(hostname):8443/auth \
     --keycloak-admin-username admin \
     --keycloak-admin-password-file - \
     --app-name mellon_example_app \
