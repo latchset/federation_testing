@@ -14,6 +14,7 @@ echo "Running test for AUTHDIR=${AUTHDIR}"
 #KC_VERSION=16.1.1
 #KC_VERSION=latest
 KC_VERSION=22.0.1
+KC_AUTOBUILD=""
 
 #################
 
@@ -25,7 +26,9 @@ if [ -f /etc/os-release ]; then
         dnf config-manager --enable rhel-*
         if [ $VER_MAJOR -eq 8 -a $VER_MINOR -le 3 ]; then
             KC_VERSION=18.0.2
+            KC_AUTOBUILD="--auto-build"
             echo "$(hostname -i|awk '{print $1}') $(hostname)" >> /etc/hosts
+            dnf config-manager --disable rhel-buildroot-*updates
         fi
     fi
 fi
@@ -279,7 +282,7 @@ podman run --name keycloak -d \
     -e KC_HTTPS_TRUST_STORE_PASSWORD=Secret123 \
     -e KC_HTTP_RELATIVE_PATH=${AUTHDIR} \
     -v /tmp/https:/etc/x509/https:Z \
-    quay.io/keycloak/keycloak:$KC_VERSION start
+    quay.io/keycloak/keycloak:$KC_VERSION start ${KC_AUTOBUILD}
 
 # Removing deprecated auto-build option
 # --auto-build
