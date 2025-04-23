@@ -28,7 +28,9 @@ if [ -f /etc/os-release ]; then
             KC_VERSION=18.0.2
             KC_AUTOBUILD="--auto-build"
             echo "$(hostname -I|awk '{print $1}') $(hostname)" >> /etc/hosts
+            set +e
             dnf config-manager --disable rhel-buildroot-*updates
+            set -e
         fi
     fi
 fi
